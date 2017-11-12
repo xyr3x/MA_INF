@@ -13,8 +13,9 @@ import java.util.List;
 
 import controller.Main;
 
-public class FireFighterCrew {
+public class FireFighterCrew implements Comparable<FireFighterCrew> {
 	private int ID;
+	//number of non burning vertices
 	private int Fitness = 0;
 	private List<FireFighter> crew = new ArrayList<FireFighter>();
 
@@ -42,6 +43,19 @@ public class FireFighterCrew {
 	}
 	public void setCrew(List<FireFighter> crew) {
 		this.crew = crew;
+	}
+
+	@Override
+	public int compareTo(FireFighterCrew arg0) {
+		if(Fitness < arg0.getFitness()){
+			return 1;
+		}
+
+		if(Fitness > arg0.getFitness()){
+			return -1;
+		}
+
+		return 0;
 	}
 
 }
