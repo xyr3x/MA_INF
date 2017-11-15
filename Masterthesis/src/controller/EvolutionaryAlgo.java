@@ -20,29 +20,29 @@ package controller;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import model.*;
 
 public class EvolutionaryAlgo {
 	private List<FireFighterCrew> population = new ArrayList<FireFighterCrew>();
 	private boolean fighterAtBorder = false;
-	// vertices that do not burn
-	private List<Integer> nonBurningVertices = new ArrayList<>();
-	// Vertices of the last timestep
-	private List<Integer> latestVertices = new ArrayList<>();
-	// defended vertices
-	private List<Integer> defendedVertices = new ArrayList<>();
 
 	private int maxFitness = 0;
 	private int optimum = Main.CrewSize + 5;
+	private FireFighterCrew bestCrew = new FireFighterCrew();
+	private int[] bestSetUp = new int[Main.CrewSize];
 
 	// constructor
 	public EvolutionaryAlgo() {
 
 	}
 
-	private void evAlgo() {
+	public void evAlgo() {
+		System.out.println("Start");
 		// stuff
+		int counter = 0;
 
 		// 1. Initialisierung
 		initialize();
@@ -54,15 +54,18 @@ public class EvolutionaryAlgo {
 				maxFitness = population.get(i).getFitness();
 			}
 		}
+		System.out.println("First Value: " + maxFitness);
 
 		// 3. Schleife
 		while (maxFitness < optimum) {
+			counter++;
+			System.out.println("Schleife Nr: " + counter);
 
 			// 3.1 Selektion
 			Collections.sort(population);
 			for (int i = 0; i < Main.RecombinationSize; i++) {
 				// von hinten Elemente rauswerfen, um Indexshift zu vermeiden
-				population.remove(Main.PopulationSize - 1);
+				population.remove(Main.PopulationSize - (i + 1));
 			}
 
 			// 3.2. Rekombination
@@ -79,9 +82,9 @@ public class EvolutionaryAlgo {
 				for (int j = 0; j < Main.CrewSize; j++) {
 					int chain[] = new int[Main.TimeInterval];
 					FireFighter fighter = new FireFighter();
-					//set start vertice
+					// set start vertice
 					fighter.setStartVertice(population.get(parent1).getCrew().get(j).getStartVertice());
-					//set chain
+					// set chain
 					for (int k = 0; k < crossOver; k++) {
 						chain[k] = population.get(parent1).getCrew().get(j).getChainIndex(k);
 					}
@@ -96,31 +99,35 @@ public class EvolutionaryAlgo {
 
 			}
 
-			//3.3 Mutation
-			if(Main.rnd.nextInt(100) < Main.MutationProbability){
+			// 3.3 Mutation
+			if (Main.rnd.nextInt(100) < Main.MutationProbability) {
 
-				//numbers??
+				// numbers??
 				int numberOfCrews = Main.rnd.nextInt(15);
 				int numberOfFighters = Main.rnd.nextInt(15);
 				int numberOfBitflips = Main.rnd.nextInt(15);
 
-				for(int i = 0; i < numberOfCrews; i++){
-					for(int j = 0; j < numberOfFighters; j++){
-						for(int k = 0; k < numberOfBitflips; k++){
-							population.get(i).getCrew().get(j).setChainIndex(Main.rnd.nextInt(Main.TimeInterval), Main.rnd.nextInt(5));
+				for (int i = 0; i < numberOfCrews; i++) {
+					for (int j = 0; j < numberOfFighters; j++) {
+						for (int k = 0; k < numberOfBitflips; k++) {
+							population.get(i).getCrew().get(j).setChainIndex(Main.rnd.nextInt(Main.TimeInterval),
+									Main.rnd.nextInt(5));
 						}
 					}
 				}
 
 			}
 
-			//3.4 Evaluation
+			// 3.4 Evaluation
 			for (int i = 0; i < population.size(); i++) {
 				calculateFitness(population.get(i));
 				if (population.get(i).getFitness() > maxFitness) {
 					maxFitness = population.get(i).getFitness();
+					bestCrew = population.get(i);
+
 				}
 			}
+			System.out.println("Fitness: " + maxFitness);
 		}
 
 	}
@@ -160,15 +167,22 @@ public class EvolutionaryAlgo {
 		}
 	}
 
-	private void calculateFitness(FireFighterCrew crew) {
+	public void calculateFitness(FireFighterCrew crew) {
+		// vertices that do not burn
+		SortedSet<Integer> nonBurningVertices = new TreeSet();
+		// Vertices of the last timestep
+		List<Integer> latestVertices = new ArrayList<>();
+		// defended vertices
+		SortedSet<Integer> defendedVertices = new TreeSet();
+
 		// move fighters (switch case unterscheidung), expand fire
 		int tempDirection, currentVertice;
 		// for every time step
-		for (int i = 0; i < Main.TimeInterval; i++) {
+		timeloop: for (int i = 0; i < Main.TimeInterval; i++) {
 
 			// move every fighter
-			// TODO: Randfälle????
-			for (int j = 0; j < Main.CrewSize; j++) {
+
+			fighterloop: for (int j = 0; j < Main.CrewSize; j++) {
 				currentVertice = crew.getCrew().get(j).getCurrentVertice();
 				tempDirection = crew.getCrew().get(j).getChainIndex(i);
 
@@ -178,28 +192,28 @@ public class EvolutionaryAlgo {
 				if (currentVertice == 0) {
 					if (tempDirection == 3 || tempDirection == 4) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
 				if (currentVertice == Main.GridLength) {
 					if (tempDirection == 2 || tempDirection == 3) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
 				if (currentVertice == (Main.GridSize - Main.GridLength)) {
 					if (tempDirection == 1 || tempDirection == 4) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
 				if (currentVertice == (Main.GridSize - 1)) {
 					if (tempDirection == 1 || tempDirection == 2) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
@@ -208,7 +222,7 @@ public class EvolutionaryAlgo {
 				if (currentVertice < Main.GridLength) {
 					if (tempDirection == 3) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
@@ -216,7 +230,7 @@ public class EvolutionaryAlgo {
 				if (currentVertice > (Main.GridSize - Main.GridLength)) {
 					if (tempDirection == 1) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
@@ -224,7 +238,7 @@ public class EvolutionaryAlgo {
 				if ((currentVertice % Main.GridLength) == 0) {
 					if (tempDirection == 4) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
@@ -232,7 +246,7 @@ public class EvolutionaryAlgo {
 				if ((currentVertice % Main.GridLength) == (Main.GridLength - 1)) {
 					if (tempDirection == 2) {
 						fighterAtBorder = true;
-						continue;
+						continue fighterloop;
 					}
 				}
 
@@ -243,7 +257,14 @@ public class EvolutionaryAlgo {
 					break;
 				// go north
 				case 1:
-					crew.getCrew().get(j).setCurrentVertice(currentVertice + Main.GridSize);
+					// Zielknoten besetzt
+					for (int k = 0; k < Main.CrewSize; k++) {
+						if ((currentVertice + Main.GridLength) == crew.getCrew().get(k).getCurrentVertice()) {
+							defendedVertices.add(crew.getCrew().get(j).getCurrentVertice());
+							continue fighterloop;
+						}
+					}
+					crew.getCrew().get(j).setCurrentVertice(currentVertice + Main.GridLength);
 					crew.setFitness(crew.getFitness() + 1);
 					nonBurningVertices.add(currentVertice);
 					latestVertices.add(currentVertice);
@@ -252,6 +273,14 @@ public class EvolutionaryAlgo {
 					break;
 				// go east
 				case 2:
+					// Zielknoten besetzt
+					for (int k = 0; k < Main.CrewSize; k++) {
+						if ((currentVertice + 1) == crew.getCrew().get(k).getCurrentVertice()) {
+							defendedVertices.add(crew.getCrew().get(j).getCurrentVertice());
+							continue fighterloop;
+						}
+					}
+
 					crew.getCrew().get(j).setCurrentVertice(currentVertice + 1);
 					crew.setFitness(crew.getFitness() + 1);
 					nonBurningVertices.add(currentVertice);
@@ -260,7 +289,14 @@ public class EvolutionaryAlgo {
 					break;
 				// go south
 				case 3:
-					crew.getCrew().get(j).setCurrentVertice(currentVertice - Main.GridSize);
+					// Zielknoten besetzt
+					for (int k = 0; k < Main.CrewSize; k++) {
+						if ((currentVertice - Main.GridLength) == crew.getCrew().get(k).getCurrentVertice()) {
+							defendedVertices.add(crew.getCrew().get(j).getCurrentVertice());
+							continue fighterloop;
+						}
+					}
+					crew.getCrew().get(j).setCurrentVertice(currentVertice - Main.GridLength);
 					crew.setFitness(crew.getFitness() + 1);
 					nonBurningVertices.add(currentVertice);
 					latestVertices.add(currentVertice);
@@ -268,6 +304,13 @@ public class EvolutionaryAlgo {
 					break;
 				// go west
 				case 4:
+					// Zielknoten besetzt
+					for (int k = 0; k < Main.CrewSize; k++) {
+						if ((currentVertice - 1) == crew.getCrew().get(k).getCurrentVertice()) {
+							defendedVertices.add(crew.getCrew().get(j).getCurrentVertice());
+							continue fighterloop;
+						}
+					}
 					crew.getCrew().get(j).setCurrentVertice(currentVertice - 1);
 					crew.setFitness(crew.getFitness() + 1);
 					nonBurningVertices.add(currentVertice);
@@ -281,12 +324,13 @@ public class EvolutionaryAlgo {
 			// expand fire
 
 			for (int k = 0; k < latestVertices.size(); k++) {
+				//listPrinter(nonBurningVertices);
 
 				// Randfälle! verlassener Knoten liegt am Rand/Ecke
 				if (latestVertices.get(k).intValue() == 0) {
 					// only check upper and right vertice
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + 1))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + 1))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -294,7 +338,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -314,7 +358,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -325,7 +369,7 @@ public class EvolutionaryAlgo {
 				if (latestVertices.get(k).intValue() == (Main.GridSize - Main.GridLength)) {
 					// only check lower and right vertice
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + 1))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + 1))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -333,7 +377,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -352,7 +396,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -372,7 +416,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + 1))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + 1))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -380,7 +424,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -399,7 +443,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + 1))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + 1))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -407,7 +451,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -419,7 +463,7 @@ public class EvolutionaryAlgo {
 				// links
 				if ((latestVertices.get(k).intValue() % Main.GridLength) == 0) {
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + 1))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + 1))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -427,7 +471,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -435,7 +479,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -454,7 +498,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -462,7 +506,7 @@ public class EvolutionaryAlgo {
 					}
 
 					if (!nonBurningVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
-						if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+						if (!defendedVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
 							nonBurningVertices.remove(latestVertices.get(k));
 							crew.setFitness(crew.getFitness() - 1);
 							continue;
@@ -481,15 +525,14 @@ public class EvolutionaryAlgo {
 				}
 
 				if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + 1))) {
-					if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+					if (!defendedVertices.contains((latestVertices.get(k).intValue() + 1))) {
 						nonBurningVertices.remove(latestVertices.get(k));
 						crew.setFitness(crew.getFitness() - 1);
 						continue;
 					}
 				}
-
 				if (!nonBurningVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
-					if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+					if (!defendedVertices.contains((latestVertices.get(k).intValue() + Main.GridLength))) {
 						nonBurningVertices.remove(latestVertices.get(k));
 						crew.setFitness(crew.getFitness() - 1);
 						continue;
@@ -497,23 +540,31 @@ public class EvolutionaryAlgo {
 				}
 
 				if (!nonBurningVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
-					if (!defendedVertices.contains((latestVertices.get(k).intValue() - 1))) {
+					if (!defendedVertices.contains((latestVertices.get(k).intValue() - Main.GridLength))) {
 						nonBurningVertices.remove(latestVertices.get(k));
 						crew.setFitness(crew.getFitness() - 1);
 						continue;
 					}
 				}
 
+
 			}
 
 			latestVertices.clear();
 			defendedVertices.clear();
 		}
+		nonBurningVertices.clear();
 
 	}
 
 	// Hilfsfunktionen
-	private int uniqueStartVertice(int startVertice, FireFighterCrew crew) {
+	//getter & and setter
+	public List<FireFighterCrew> getPopulation(){
+		return population;
+	}
+
+
+	public int uniqueStartVertice(int startVertice, FireFighterCrew crew) {
 		// check if startVertice equals already existing startVertice
 		for (int i = 0; i < crew.getCrew().size(); i++) {
 			if (startVertice == crew.getCrew().get(i).getStartVertice()) {
@@ -522,6 +573,20 @@ public class EvolutionaryAlgo {
 			}
 		}
 		return startVertice;
+	}
+
+	private void listPrinter(List list) {
+		System.out.print("List: ");
+		for (int i = 0; i < list.size(); i++) {
+			System.out.print(list.get(i).toString() + ";");
+		}
+		System.out.println();
+	}
+
+	private void listPrinter(SortedSet set) {
+		System.out.print("List: ");
+		System.out.println(set.toString());
+		System.out.println();
 	}
 
 }
