@@ -30,7 +30,7 @@ public class EvolutionaryAlgo {
 	private boolean fighterAtBorder = false;
 
 	private int maxFitness = 0;
-	private int optimum = Main.CrewSize + 5;
+	private int optimum = Main.CrewSize + 10;
 	private FireFighterCrew bestCrew = new FireFighterCrew();
 	private int[] bestSetUp = new int[Main.CrewSize];
 
@@ -174,6 +174,8 @@ public class EvolutionaryAlgo {
 		List<Integer> latestVertices = new ArrayList<>();
 		// defended vertices
 		SortedSet<Integer> defendedVertices = new TreeSet();
+		int[] bestSetup = new int[Main.CrewSize];
+		int tempFitness = crew.getFitness();
 
 		// move fighters (switch case unterscheidung), expand fire
 		int tempDirection, currentVertice;
@@ -186,31 +188,31 @@ public class EvolutionaryAlgo {
 				currentVertice = crew.getCrew().get(j).getCurrentVertice();
 				tempDirection = crew.getCrew().get(j).getChainIndex(i);
 
-				// Randfälle, bleibe stehenn wenn Grid zu Ende
+				// Randfälle, bleibe stehenn wenn Grid zu Ende//Rand rausnehmen
 				// Ecken: 0; GridLength; GridLength^2 - (GridLength);
 				// GridLength^2 - 1
-				if (currentVertice == 0) {
+				if (currentVertice == 0 + Main.GridLength + 1) {
 					if (tempDirection == 3 || tempDirection == 4) {
 						fighterAtBorder = true;
 						continue fighterloop;
 					}
 				}
 
-				if (currentVertice == Main.GridLength) {
+				if (currentVertice == Main.GridLength + Main.GridLength - 1) {
 					if (tempDirection == 2 || tempDirection == 3) {
 						fighterAtBorder = true;
 						continue fighterloop;
 					}
 				}
 
-				if (currentVertice == (Main.GridSize - Main.GridLength)) {
+				if (currentVertice == (Main.GridSize - Main.GridLength - Main.GridLength + 1)) {
 					if (tempDirection == 1 || tempDirection == 4) {
 						fighterAtBorder = true;
 						continue fighterloop;
 					}
 				}
 
-				if (currentVertice == (Main.GridSize - 1)) {
+				if (currentVertice == (Main.GridSize - 1 - Main.GridLength - 1)) {
 					if (tempDirection == 1 || tempDirection == 2) {
 						fighterAtBorder = true;
 						continue fighterloop;
@@ -219,7 +221,7 @@ public class EvolutionaryAlgo {
 
 				// Rand des Grids
 				// unten
-				if (currentVertice < Main.GridLength) {
+				if (currentVertice < Main.GridLength + Main.GridLength) {
 					if (tempDirection == 3) {
 						fighterAtBorder = true;
 						continue fighterloop;
@@ -227,7 +229,7 @@ public class EvolutionaryAlgo {
 				}
 
 				// oben
-				if (currentVertice > (Main.GridSize - Main.GridLength)) {
+				if (currentVertice > (Main.GridSize - Main.GridLength - Main.GridLength)) {
 					if (tempDirection == 1) {
 						fighterAtBorder = true;
 						continue fighterloop;
@@ -235,7 +237,7 @@ public class EvolutionaryAlgo {
 				}
 
 				// links
-				if ((currentVertice % Main.GridLength) == 0) {
+				if ((currentVertice % Main.GridLength) == 1) {
 					if (tempDirection == 4) {
 						fighterAtBorder = true;
 						continue fighterloop;
@@ -243,7 +245,7 @@ public class EvolutionaryAlgo {
 				}
 
 				// rechts
-				if ((currentVertice % Main.GridLength) == (Main.GridLength - 1)) {
+				if ((currentVertice % Main.GridLength) == (Main.GridLength - 2)) {
 					if (tempDirection == 2) {
 						fighterAtBorder = true;
 						continue fighterloop;
@@ -550,11 +552,19 @@ public class EvolutionaryAlgo {
 
 			}
 
+			//save best fitness
+			if(crew.getFitness() > tempFitness){
+				tempFitness = crew.getFitness();
+				for (int k = 0; k < Main.CrewSize; k++){
+					bestSetup[k] = crew.getCrew().get(k).getCurrentVertice();
+				}
+			}
+
 			latestVertices.clear();
 			defendedVertices.clear();
 		}
 		nonBurningVertices.clear();
-
+		crew.setBestSetup(bestSetup);
 	}
 
 	// Hilfsfunktionen

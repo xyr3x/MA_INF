@@ -18,6 +18,8 @@ public class FireFighterCrew implements Comparable<FireFighterCrew> {
 	//number of non burning vertices
 	private int Fitness = 0;
 	private List<FireFighter> crew = new ArrayList<FireFighter>();
+	private int[] bestSetup = new int[Main.CrewSize];
+
 
 	//constructor
 	public FireFighterCrew(){
@@ -43,6 +45,14 @@ public class FireFighterCrew implements Comparable<FireFighterCrew> {
 	}
 	public void setCrew(List<FireFighter> crew) {
 		this.crew = crew;
+	}
+
+	public int[] getBestSetup(){
+		return bestSetup;
+	}
+
+	public void setBestSetup(int[] bestSetup){
+		this.bestSetup = bestSetup;
 	}
 
 	@Override

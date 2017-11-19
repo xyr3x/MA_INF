@@ -41,10 +41,23 @@ public class Main {
 		System.out.println();
 		System.out.println();
 
-		System.out.println("Beste Crew: ");
+		System.out.println("Beste Crew __ EndSetup: ");
 		for (int i = 0; i < Main.CrewSize; i++) {
 			System.out.print(
 					"Fighter " + i + ": " + "StartVertice: " + crew.getCrew().get(i).getStartVertice() + " ; CurrentVertice: " + crew.getCrew().get(i).getCurrentVertice() + " ; Chain: ");
+			for (int j = 0; j < TimeInterval; j++) {
+				System.out.print(crew.getCrew().get(i).getChainIndex(j) + ";");
+			}
+			System.out.println("\n");
+		}
+
+		int[] temp = new int[Main.CrewSize];
+		temp = crew.getBestSetup();
+		System.out.println("Bestes Setup: ");
+		for (int i = 0; i < Main.CrewSize; i++) {
+
+			System.out.print(
+					"Fighter " + i + ": " + "StartVertice: " + crew.getCrew().get(i).getStartVertice() + " ; BestVertice: " + temp[i] + " ; Chain: ");
 			for (int j = 0; j < TimeInterval; j++) {
 				System.out.print(crew.getCrew().get(i).getChainIndex(j) + ";");
 			}
