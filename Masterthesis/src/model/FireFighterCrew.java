@@ -19,6 +19,8 @@ public class FireFighterCrew implements Comparable<FireFighterCrew> {
 	private int Fitness = 0;
 	private List<FireFighter> crew = new ArrayList<FireFighter>();
 	private int[] bestSetup = new int[Main.CrewSize];
+	private boolean changed = false;
+	private boolean newCrew = false;
 
 
 	//constructor
@@ -53,6 +55,22 @@ public class FireFighterCrew implements Comparable<FireFighterCrew> {
 
 	public void setBestSetup(int[] bestSetup){
 		this.bestSetup = bestSetup;
+	}
+
+	public boolean isChanged() {
+		return changed;
+	}
+
+	public void setChanged(boolean changed) {
+		this.changed = changed;
+	}
+
+	public boolean isNewCrew() {
+		return newCrew;
+	}
+
+	public void setNewCrew(boolean newCrew) {
+		this.newCrew = newCrew;
 	}
 
 	@Override

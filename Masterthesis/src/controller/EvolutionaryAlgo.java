@@ -30,7 +30,7 @@ public class EvolutionaryAlgo {
 	private boolean fighterAtBorder = false;
 
 	private int maxFitness = 0;
-	private int optimum = Main.CrewSize + 10;
+	private int optimum = Main.CrewSize + 5;
 	private FireFighterCrew bestCrew = new FireFighterCrew();
 	private int[] bestSetUp = new int[Main.CrewSize];
 
@@ -93,8 +93,9 @@ public class EvolutionaryAlgo {
 					}
 
 					crew.getCrew().add(fighter);
-				}
 
+				}
+				crew.setNewCrew(true);
 				population.add(crew);
 
 			}
@@ -103,9 +104,9 @@ public class EvolutionaryAlgo {
 			if (Main.rnd.nextInt(100) < Main.MutationProbability) {
 
 				// numbers??
-				int numberOfCrews = Main.rnd.nextInt(15);
-				int numberOfFighters = Main.rnd.nextInt(15);
-				int numberOfBitflips = Main.rnd.nextInt(15);
+				int numberOfCrews = Main.rnd.nextInt(Main.PopulationSize);
+				int numberOfFighters = Main.rnd.nextInt(Main.CrewSize);
+				int numberOfBitflips = Main.rnd.nextInt(Main.TimeInterval/4);
 
 				for (int i = 0; i < numberOfCrews; i++) {
 					for (int j = 0; j < numberOfFighters; j++) {
@@ -114,18 +115,22 @@ public class EvolutionaryAlgo {
 									Main.rnd.nextInt(5));
 						}
 					}
+					population.get(i).setChanged(true);
 				}
 
 			}
 
 			// 3.4 Evaluation
 			for (int i = 0; i < population.size(); i++) {
-				calculateFitness(population.get(i));
-				if (population.get(i).getFitness() > maxFitness) {
-					maxFitness = population.get(i).getFitness();
-					bestCrew = population.get(i);
+				if(population.get(i).isChanged() || population.get(i).isNewCrew()){
+					calculateFitness(population.get(i));
+					if (population.get(i).getFitness() > maxFitness) {
+						maxFitness = population.get(i).getFitness();
+						bestCrew = population.get(i);
 
+					}
 				}
+
 			}
 			System.out.println("Fitness: " + maxFitness);
 		}
